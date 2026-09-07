@@ -21,9 +21,6 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          # A deploy key (or PAT) is required so the tag push re-triggers
-          # release.yml - pushes made with GITHUB_TOKEN do not fire workflows.
-          ssh-key: ${{ secrets.DEPLOY_KEY }}
           persist-credentials: true
 
       - name: Setup Python
@@ -57,6 +54,24 @@ jobs:
         run: |
           git push origin master
           git push origin --tags
+
+      # A tag pushed with GITHUB_TOKEN does not trigger release.yml, so cut the
+      # release here rather than requiring a deploy key just for that hop.
+      - name: Build HACS zip
+        if: steps.bump.outputs.skip != 'true'
+        run: |
+          cd custom_components/satchel_one
+          zip -r "$GITHUB_WORKSPACE/satchel_one.zip" . -x '*__pycache__*'
+
+      - name: Create GitHub release
+        if: steps.bump.outputs.skip != 'true'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.bump.outputs.version }}
+          generateReleaseNotes: true
+          allowUpdates: true
+          artifacts: "satchel_one.zip"
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create workflow summary
         if: always()

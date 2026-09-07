@@ -35,6 +35,9 @@ jobs:
         with:
           tag: ${{ env.RELEASE_VERSION }}
           generateReleaseNotes: true
+          # bump.yml already releases its own tags; stay idempotent for the
+          # manual-tag case rather than failing on an existing release.
+          allowUpdates: true
           artifacts: "satchel_one.zip"
           token: ${{ secrets.GITHUB_TOKEN }}
 
