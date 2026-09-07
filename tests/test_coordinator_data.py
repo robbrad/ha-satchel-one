@@ -104,3 +104,27 @@ def test_pupil_name(pupil, expected):
 
 def test_now_is_frozen(frozen_now):
     assert frozen_now == NOW
+
+
+def test_bare_due_date_means_end_of_day_not_midnight():
+    """Regression: homework due today must not read as overdue all day.
+
+    ``dt_util.parse_datetime`` accepts a date-only string and returns midnight,
+    so treating it as the due moment made every task due today instantly
+    overdue.
+    """
+    parsed = parse_due("2026-09-07")
+    assert parsed is not None
+    assert (parsed.hour, parsed.minute) == (23, 59)
+    assert parsed > NOW
+
+
+def test_due_today_is_not_overdue():
+    data = SatchelData(todos=[todo("Due today", due_on="2026-09-07")])
+    assert data.overdue == []
+    assert len(data.outstanding) == 1
+
+
+def test_yesterdays_bare_date_is_overdue():
+    data = SatchelData(todos=[todo("Due yesterday", due_on="2026-09-06")])
+    assert len(data.overdue) == 1

@@ -2,16 +2,31 @@
   "config": {
     "step": {
       "user": {
-        "title": "Satchel One account",
-        "description": "Sign in with your Satchel One (Show My Homework) parent login. Enter your school's name to look it up.",
+        "title": "Find your school",
+        "description": "Search Satchel One's school directory by name or postcode.",
         "data": {
-          "school": "School name",
+          "school": "School name or postcode"
+        },
+        "data_description": {
+          "school": "Part of the name is enough, for example 'Example High' or 'EX1 2AB'."
+        }
+      },
+      "school": {
+        "title": "Choose your school",
+        "description": "Several schools matched your search. Pick the right one.",
+        "data": {
+          "school_id": "School"
+        }
+      },
+      "credentials": {
+        "title": "Satchel One account",
+        "description": "Sign in with your Satchel One (Show My Homework) parent login.",
+        "data": {
           "username": "Email address or username",
           "password": "Password",
           "scan_minutes": "Update interval (minutes)"
         },
         "data_description": {
-          "school": "As it appears on the Satchel One login page - try the full name or the postcode.",
           "scan_minutes": "How often to check for new homework. Between 15 and 1440 minutes."
         }
       },
@@ -31,7 +46,7 @@
       }
     },
     "error": {
-      "school_not_found": "No school matched that name. Try the full name or postcode.",
+      "school_not_found": "No school matched that. Try more of the name, or your postcode.",
       "invalid_auth": "Email or password incorrect.",
       "cannot_connect": "Could not reach Satchel One. Check your connection and try again.",
       "no_students": "Logged in, but no pupils are linked to this account."
@@ -56,24 +71,23 @@
   },
   "entity": {
     "sensor": {
-      "homework_outstanding": {
-        "name": "Homework outstanding"
-      },
-      "homework_overdue": {
-        "name": "Homework overdue"
-      },
-      "homework_next_due": {
-        "name": "Homework next due"
-      },
-      "detentions": {
-        "name": "Detentions"
-      },
-      "homework_due_this_week": {
-        "name": "Homework due this week"
-      },
-      "behaviour_points": {
-        "name": "Behaviour points"
-      }
+      "homework_outstanding": { "name": "Homework outstanding" },
+      "homework_overdue": { "name": "Homework overdue" },
+      "homework_next_due": { "name": "Homework next due" },
+      "detentions": { "name": "Detentions" },
+      "homework_due_this_week": { "name": "Homework due this week" },
+      "behaviour_points": { "name": "Behaviour points" }
+    },
+    "binary_sensor": {
+      "has_overdue_homework": { "name": "Overdue homework" },
+      "detention_today": { "name": "Detention today" },
+      "homework_due_today": { "name": "Homework due today" }
+    },
+    "todo": {
+      "homework": { "name": "Homework" }
+    },
+    "calendar": {
+      "timetable": { "name": "Timetable" }
     }
   }
 }

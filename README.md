@@ -11,19 +11,62 @@ detentions and behaviour points.
 
 > Unofficial. Not affiliated with, endorsed by, or supported by Satchel.
 
-## Sensors
+## What you get
+
+### To-do list
+
+Homework appears as a native Home Assistant **to-do list**, so it shows up in
+the to-do card and dashboard like any other list. Ticking an item **marks it
+complete in Satchel One** - this is the one part of the integration that
+writes back to the school's record. Each item carries the task type, subject,
+teacher, the description and a direct link to the task.
+
+### Calendar
+
+The pupil's **timetable** as a calendar entity: subject, class, teacher and
+room, for whatever range the calendar view asks for.
+
+### Sensors
 
 | Sensor | Description |
 | --- | --- |
-| Homework outstanding | Tasks not yet marked complete. Up to 20 listed as an attribute. |
+| Homework outstanding | Tasks not yet marked complete. Up to 20 listed as an attribute, each with a link. |
 | Homework overdue | Outstanding tasks whose due date has passed. |
-| Homework next due | Timestamp of the soonest-due task, with `days_until_due` and the task details. |
+| Homework next due | Timestamp of the soonest-due task, with `days_until_due`. |
 | Homework due this week | Outstanding tasks due within the next 7 days. |
 | Detentions | Outstanding detentions, with the details as an attribute. |
-| Behaviour points | Net total, with positive/negative splits for the week, month and all time. |
+| Behaviour points | Net total, with week/month/all-time splits **and the individual events** that made them up. |
 
-Each task attribute carries the title, subject, teacher, due date, type and
-submission status — enough to build a dashboard card without extra templates.
+### Binary sensors
+
+| Binary sensor | On when |
+| --- | --- |
+| Overdue homework | Any outstanding task is past its due date |
+| Homework due today | Any outstanding task is due today |
+| Detention today | A detention is scheduled for today |
+
+### Events
+
+Automations can react the moment something changes, instead of polling
+attributes:
+
+| Event | Fired when | Payload |
+| --- | --- | --- |
+| `satchel_one_new_homework` | A task appears | `task_id`, `title`, `subject`, `teacher`, `type`, `due_on`, `url` |
+| `satchel_one_homework_completed` | A task is marked complete | `task_id`, `title`, `subject` |
+| `satchel_one_new_detention` | A detention appears | `detention_id`, `reason`, `date`, `location` |
+| `satchel_one_behaviour_point` | Points are awarded | `points`, `severity`, `positive`, `reason`, `category`, `teacher` |
+
+All payloads also carry `student_id` and `student_name`. `severity` is
+`abs(points)`, so automations can branch on seriousness without sign maths.
+Nothing is fired on the first refresh after a restart, so you are not flooded
+with events for homework that already existed.
+
+### Diagnostics
+
+Download diagnostics from the integration page for a bug report. Credentials
+are redacted and the payload deliberately contains field *names* and counts
+rather than your child's homework.
 
 ## Installation
 
@@ -43,9 +86,17 @@ Copy `custom_components/satchel_one` into your Home Assistant
 
 Everything is set up in the UI.
 
+Setup is three short steps:
+
+1. **Find your school** - search Satchel's public directory by name or
+   postcode. If several match, you pick from a list showing each school's town
+   and postcode, so near-identical names are easy to tell apart.
+2. **Sign in** with your Satchel One **parent** login.
+3. **Choose a pupil**, if the account has more than one.
+
 | Field | Notes |
 | --- | --- |
-| School name | Looked up against Satchel's public school directory. Try the full name or your postcode. |
+| School name or postcode | Part of the name is enough |
 | Email address or username | Your Satchel One **parent** login |
 | Password | Stored in Home Assistant's encrypted config entry storage |
 | Update interval | Minutes between polls. 15–1440, default 60. |
@@ -53,8 +104,8 @@ Everything is set up in the UI.
 ### More than one child
 
 If your account has several pupils, setup asks which one this entry should
-track. Add the integration again to track another — each gets its own device
-and sensors.
+track. Add the integration again to track another — each gets its own device,
+to-do list, calendar and sensors.
 
 ### Changing the poll interval
 
@@ -94,10 +145,17 @@ worth knowing if you ever debug it:
 
 - `school_id` is **mandatory** in the password grant. Without it the server
   answers `invalid_credentials` even for a correct password — which is why
-  setup starts by resolving your school's name to its numeric id.
+  setup starts by resolving your school to its numeric id, via Satchel's
+  public `school_search` endpoint.
+- The token endpoint lives at the **domain root**. `/api/oauth/token` is
+  CDN-fronted and never authenticates.
 - Data requests authenticate with the `smhw_token` field from the grant, **not**
   `access_token`, and the API version travels as a vendor media type
   (`Accept: application/smhw.v2021.5+json`).
+- The CDN in front of the API caches failed responses, so every request carries
+  a cache-busting parameter.
+- This integration has **no Python dependencies** — everything is JSON over the
+  `aiohttp` session Home Assistant already provides.
 
 The client refreshes with the refresh token rather than re-sending your
 password on every poll.
@@ -112,6 +170,12 @@ secret is committed to this repository.
 
 Because these endpoints are undocumented, **Satchel can change them without
 notice** and break this integration.
+
+## Writing back to Satchel
+
+Ticking a homework item in Home Assistant marks it complete **in Satchel One**,
+under your child's record. Everything else this integration does is read-only.
+If you would rather it never wrote anything, hide or disable the to-do entity.
 
 ## Privacy
 

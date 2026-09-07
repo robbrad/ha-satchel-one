@@ -10,7 +10,12 @@ from homeassistant.core import HomeAssistant
 from .const import CONF_SCAN_MINUTES, DEFAULT_SCAN_MINUTES
 from .coordinator import SatchelConfigEntry, SatchelCoordinator
 
-PLATFORMS: list[Platform] = [Platform.SENSOR]
+PLATFORMS: list[Platform] = [
+    Platform.BINARY_SENSOR,
+    Platform.CALENDAR,
+    Platform.SENSOR,
+    Platform.TODO,
+]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: SatchelConfigEntry) -> bool:
@@ -28,11 +33,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: SatchelConfigEntry) -> b
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: SatchelConfigEntry) -> bool:
-    """Unload a config entry and close its session."""
-    unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    if unloaded:
-        await entry.runtime_data.session.close()
-    return unloaded
+    """Unload a config entry.
+
+    The aiohttp session is Home Assistant's shared one, so it is deliberately
+    not closed here.
+    """
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
 async def _async_update_listener(

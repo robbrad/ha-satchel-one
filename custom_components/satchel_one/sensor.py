@@ -13,31 +13,34 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN
 from .coordinator import (
     SatchelConfigEntry,
     SatchelCoordinator,
     SatchelData,
     parse_due,
+    task_url,
 )
+from .entity import SatchelEntity
 
 
 def _todo_brief(todo: dict[str, Any]) -> dict[str, Any]:
     """The fields worth surfacing for one piece of homework."""
     return {
+        "id": todo.get("id"),
         "title": todo.get("class_task_title"),
         "subject": todo.get("subject"),
         "teacher": todo.get("teacher_name"),
+        "description": todo.get("class_task_description"),
         "due_on": todo.get("due_on"),
         "issued_at": todo.get("issued_at"),
         "type": todo.get("class_task_type"),
         "submission_status": todo.get("submission_status"),
         "has_attachments": todo.get("has_attachments"),
+        "url": task_url(todo),
     }
 
 
@@ -64,6 +67,33 @@ def _next_due_attrs(data: SatchelData) -> dict[str, Any]:
         delta = (due.date() - dt_util.now().date()).days
         attrs["days_until_due"] = delta
     return attrs
+
+
+def _praise_brief(praise: dict[str, Any]) -> dict[str, Any]:
+    """The fields worth surfacing for one behaviour event."""
+    points = praise.get("score", praise.get("points"))
+    return {
+        "points": points,
+        "positive": None if points is None else points > 0,
+        "reason": praise.get("comments") or praise.get("reason"),
+        "category": praise.get("category"),
+        "teacher": praise.get("teacher_name"),
+        "awarded_on": praise.get("created_at"),
+    }
+
+
+def _behaviour_attrs(data: SatchelData) -> dict[str, Any]:
+    """Point totals, plus the individual events the summary only counts."""
+    summary = data.praise_summary
+    return {
+        "positive_total": summary.get("total_positive_count"),
+        "negative_total": summary.get("total_negative_count"),
+        "positive_this_week": summary.get("week_positive_count"),
+        "negative_this_week": summary.get("week_negative_count"),
+        "positive_this_month": summary.get("month_positive_count"),
+        "negative_this_month": summary.get("month_negative_count"),
+        "recent": [_praise_brief(p) for p in data.praises[:20]],
+    }
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -127,14 +157,7 @@ SENSORS: tuple[SatchelSensorDescription, ...] = (
         icon="mdi:star-circle",
         state_class=SensorStateClass.TOTAL,
         value_fn=lambda data: data.praise_summary.get("total_count"),
-        attributes_fn=lambda data: {
-            "positive_total": data.praise_summary.get("total_positive_count"),
-            "negative_total": data.praise_summary.get("total_negative_count"),
-            "positive_this_week": data.praise_summary.get("week_positive_count"),
-            "negative_this_week": data.praise_summary.get("week_negative_count"),
-            "positive_this_month": data.praise_summary.get("month_positive_count"),
-            "negative_this_month": data.praise_summary.get("month_negative_count"),
-        },
+        attributes_fn=_behaviour_attrs,
     ),
 )
 
@@ -151,11 +174,10 @@ async def async_setup_entry(
     )
 
 
-class SatchelSensor(CoordinatorEntity[SatchelCoordinator], SensorEntity):
+class SatchelSensor(SatchelEntity, CoordinatorEntity[SatchelCoordinator], SensorEntity):
     """A single Satchel One value for one pupil."""
 
     entity_description: SatchelSensorDescription
-    _attr_has_entity_name = True
 
     def __init__(
         self,
@@ -164,16 +186,9 @@ class SatchelSensor(CoordinatorEntity[SatchelCoordinator], SensorEntity):
         description: SatchelSensorDescription,
     ) -> None:
         """Bind the sensor to its coordinator and pupil device."""
-        super().__init__(coordinator)
+        super().__init__(coordinator, entry)
         self.entity_description = description
         self._attr_unique_id = f"{entry.entry_id}_{description.key}"
-        name = coordinator.data.student_name if coordinator.data else None
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, entry.entry_id)},
-            name=f"Satchel One {name}" if name else "Satchel One",
-            manufacturer="Satchel",
-            model="Show My Homework",
-        )
 
     @property
     def native_value(self) -> Any:
