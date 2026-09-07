@@ -53,6 +53,9 @@ convention = "pep257"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Put the repo root on sys.path so `custom_components.<domain>` imports under a
+# bare `pytest`, not just `python -m pytest` (which adds the cwd itself).
+pythonpath = ["."]
 asyncio_mode = "auto"
 addopts = "-q"
 
