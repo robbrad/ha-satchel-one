@@ -1,3 +1,9 @@
+## 0.4.0 (2026-09-07)
+
+### Feat
+
+- to-do list, timetable calendar, binary sensors, events and diagnostics
+
 ## 0.3.0 (2026-09-07)
 
 ### Feat
