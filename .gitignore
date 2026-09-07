@@ -1,0 +1,21 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+dist/
+build/
+.idea/
+.vscode/
+.DS_Store
+
+# Never commit real credentials or captured account pages.
+.env
+secrets.yaml
+*.local.*
+fixtures/private/

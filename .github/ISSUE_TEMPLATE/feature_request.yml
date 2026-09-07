@@ -1,0 +1,26 @@
+name: Feature request
+description: Suggest a sensor or capability for the Satchel One integration
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like it to do?
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else?
+      description: |
+        If this needs data from a Satchel One page or endpoint this integration
+        does not read yet, describe it here - **without** pasting your own
+        account data.

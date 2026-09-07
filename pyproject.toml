@@ -1,0 +1,61 @@
+[project]
+name = "ha-satchel-one"
+version = "0.1.0"
+description = "Home Assistant integration for Satchel One (Show My Homework)"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.13"
+
+# This project is not published to PyPI - it is installed by HACS straight from
+# the repository. pyproject.toml exists to configure the tooling below.
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.1.0"
+tag_format = "$version"
+update_changelog_on_bump = true
+major_version_zero = true
+version_files = [
+    "pyproject.toml:^version",
+    "custom_components/satchel_one/manifest.json:\"version\"",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "UP",   # pyupgrade
+    "D",    # pydocstyle
+    "SIM",  # flake8-simplify
+    "RUF",  # ruff-specific
+]
+ignore = [
+    "D203",  # incompatible with D211
+    "D213",  # incompatible with D212
+    # This codebase documents what a thing *is* ("True when ...", "The fields
+    # worth surfacing ..."), which reads better here than forced imperatives.
+    "D401",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D100", "D103"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-q"
+
+[tool.coverage.run]
+source = ["custom_components/satchel_one"]
+omit = ["*/tests/*"]

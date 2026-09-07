@@ -1,0 +1,33 @@
+name: PR - Lint
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  # Make sure commit messages follow the conventional commits convention:
+  # https://www.conventionalcommits.org - commitizen derives the version from them.
+  commitlint:
+    if: "!startsWith(github.event.head_commit.message, 'bump:')"
+    name: Lint Commit Messages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - run: "echo \"export default {extends: ['@commitlint/config-conventional'], rules: { 'subject-case': [0], 'body-max-line-length': [0], 'footer-max-line-length': [0] }}\" > commitlint.config.mjs"
+      - uses: wagoid/commitlint-github-action@v6
+
+  ruff:
+    name: Ruff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/ruff-action@v4
+        with:
+          args: "check --output-format=github"
+      - uses: astral-sh/ruff-action@v4
+        with:
+          args: "format --check --diff"

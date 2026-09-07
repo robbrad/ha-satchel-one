@@ -1,0 +1,26 @@
+---
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: daily
+      time: "06:00"
+    commit-message:
+      # Prefix all commit messages with "chore: " so commitlint accepts them
+      # and commitizen does not treat them as a release-worthy change.
+      prefix: "chore"
+
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+    commit-message:
+      prefix: "chore"
+    groups:
+      # One PR for the whole test toolchain rather than one per pin.
+      test-tooling:
+        patterns:
+          - "*"
