@@ -1,6 +1,6 @@
 [project]
 name = "ha-satchel-one"
-version = "0.1.0"
+version = "0.2.0"
 description = "Home Assistant integration for Satchel One (Show My Homework)"
 readme = "README.md"
 license = { text = "MIT" }
@@ -11,7 +11,7 @@ requires-python = ">=3.13"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.1.0"
+version = "0.2.0"
 tag_format = "$version"
 update_changelog_on_bump = true
 major_version_zero = true
