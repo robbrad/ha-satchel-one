@@ -1,3 +1,9 @@
+## 0.3.0 (2026-09-07)
+
+### Feat
+
+- replace placeholder lettermark icons with designed brand icons
+
 ## 0.2.2 (2026-09-07)
 
 ### Fix
