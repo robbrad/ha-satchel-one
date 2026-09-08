@@ -1,3 +1,9 @@
+## 0.4.1 (2026-09-08)
+
+### Fix
+
+- homework due at midnight is due that day, not overdue from 00:00
+
 ## 0.4.0 (2026-09-07)
 
 ### Feat
