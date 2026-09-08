@@ -132,7 +132,8 @@ def test_yesterdays_bare_date_is_overdue():
 
 def _local_midnight(day: str) -> str:
     """A due date at midnight in Home Assistant's own timezone."""
-    from datetime import date as _date, time as _time
+    from datetime import date as _date
+    from datetime import time as _time
 
     from homeassistant.util import dt as dt_util
 
