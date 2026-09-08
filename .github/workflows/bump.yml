@@ -50,10 +50,20 @@ jobs:
           echo "skip=false" >> $GITHUB_OUTPUT
 
       - name: Push changes and tags
+        id: push
         if: steps.bump.outputs.skip != 'true'
         run: |
-          git push origin master
-          git push origin --tags
+          # master can move while this run is bumping - a second push landing
+          # moments later is enough. The concurrency group serialises runs, so
+          # a newer one will redo the bump including those commits. Stand down
+          # rather than fight over the ref or force-push over someone's work.
+          if git push origin master; then
+            git push origin --tags
+            echo "raced=false" >> $GITHUB_OUTPUT
+          else
+            echo "raced=true" >> $GITHUB_OUTPUT
+            echo "master moved during the bump; a later run will redo it"
+          fi
 
       # A tag pushed with GITHUB_TOKEN does not trigger release.yml, so cut the
       # release here rather than requiring a deploy key just for that hop.
@@ -79,6 +89,8 @@ jobs:
           echo "## Bump Summary" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.bump.outputs.skip }}" == "true" ]; then
             echo "- **Status**: Skipped (no conventional commits)" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.push.outputs.raced }}" == "true" ]; then
+            echo "- **Status**: Stood down (master moved; a later run will bump)" >> $GITHUB_STEP_SUMMARY
           else
             echo "- **Status**: Success" >> $GITHUB_STEP_SUMMARY
             echo "- **New Version**: ${{ steps.bump.outputs.version }}" >> $GITHUB_STEP_SUMMARY
