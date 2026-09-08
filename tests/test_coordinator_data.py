@@ -128,3 +128,43 @@ def test_due_today_is_not_overdue():
 def test_yesterdays_bare_date_is_overdue():
     data = SatchelData(todos=[todo("Due yesterday", due_on="2026-09-06")])
     assert len(data.overdue) == 1
+
+
+def _local_midnight(day: str) -> str:
+    """A due date at midnight in Home Assistant's own timezone."""
+    from datetime import date as _date, time as _time
+
+    from homeassistant.util import dt as dt_util
+
+    y, m, d = (int(part) for part in day.split("-"))
+    return datetime.combine(
+        _date(y, m, d), _time.min, tzinfo=dt_util.DEFAULT_TIME_ZONE
+    ).isoformat()
+
+
+def test_midnight_timestamp_means_end_of_day():
+    """Regression: Satchel encodes a date-only due date as local midnight.
+
+    Taken literally that marks homework overdue from 00:00 on the day it is
+    actually due - seen live on a real account.
+    """
+    parsed = parse_due(_local_midnight("2026-09-07"))
+    assert (parsed.hour, parsed.minute) == (23, 59)
+    assert parsed.date().isoformat() == "2026-09-07"
+
+
+def test_homework_due_at_midnight_today_is_not_overdue():
+    data = SatchelData(todos=[todo("Due today", due_on=_local_midnight("2026-09-07"))])
+    assert data.overdue == []
+    assert len(data.outstanding) == 1
+
+
+def test_homework_due_at_midnight_yesterday_is_still_overdue():
+    data = SatchelData(todos=[todo("Yesterday", due_on=_local_midnight("2026-09-06"))])
+    assert len(data.overdue) == 1
+
+
+def test_a_real_time_of_day_is_left_alone():
+    """Only exact midnight is reinterpreted; a real deadline is respected."""
+    parsed = parse_due("2026-09-07T08:30:00+00:00")
+    assert (parsed.hour, parsed.minute) == (8, 30)

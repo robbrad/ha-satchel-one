@@ -52,9 +52,6 @@ def parse_due(value: str | None) -> datetime | None:
     if not value:
         return None
     text = str(value).strip()
-    # parse_datetime accepts a bare date and returns MIDNIGHT, which would make
-    # homework due today look overdue from 00:00. A date with no time means due
-    # by the end of that day.
     if "T" not in text and " " not in text:
         day = dt_util.parse_date(text)
         if day is not None:
@@ -62,7 +59,15 @@ def parse_due(value: str | None) -> datetime | None:
     parsed = dt_util.parse_datetime(text)
     if parsed is None:
         return None
-    return dt_util.as_local(parsed) if parsed.tzinfo is None else parsed
+    aware = dt_util.as_local(parsed) if parsed.tzinfo is None else parsed
+    local = dt_util.as_local(aware)
+    # Satchel expresses a date-only due date as local midnight (and
+    # parse_datetime turns a bare date into midnight too). Read literally that
+    # marks homework overdue from the first second of the very day it is due,
+    # so midnight means "by the end of this day".
+    if (local.hour, local.minute, local.second, local.microsecond) == (0, 0, 0, 0):
+        return local.replace(hour=23, minute=59, second=59, microsecond=999999)
+    return aware
 
 
 def task_url(todo: dict[str, Any]) -> str | None:
